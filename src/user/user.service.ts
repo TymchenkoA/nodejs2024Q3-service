@@ -1,48 +1,22 @@
 import { randomUUID } from 'node:crypto';
-import {
-  Injectable,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { InMemoryDbService } from '../database/in-memory-db.service';
 
 @Injectable()
 export class UserService {
-  private users: User[] = [
-    {
-      id: 'h87q7551-8286857',
-      login: 'User1',
-      password: 'User1p',
-      version: 1,
-      createdAt: 45431,
-      updatedAt: 998257,
-    },
-    {
-      id: 'h87q7551-82865347',
-      login: 'User2',
-      password: 'User2p',
-      version: 1,
-      createdAt: 45651,
-      updatedAt: 998258,
-    },
-    {
-      id: 'h87q7551-82868cd',
-      login: 'User3',
-      password: 'User3p',
-      version: 1,
-      createdAt: 45821,
-      updatedAt: 99825235,
-    },
-  ];
+  private readonly collection = 'users';
+
+  constructor(private readonly dbService: InMemoryDbService) {}
 
   findAll(): User[] {
-    return this.users;
+    return this.dbService.findAll<User>(this.collection);
   }
 
   findOne(id: string): User {
-    return this.users.find((user) => user.id === id);
+    return this.dbService.findOne<User>(this.collection, id);
   }
 
   create(createUserDto: CreateUserDto) {
@@ -57,29 +31,17 @@ export class UserService {
       updatedAt: time,
     });
 
-    this.users.push(newUser);
-
-    return newUser;
+    return this.dbService.create<User>(this.collection, newUser);
   }
 
   delete(id: string) {
-    const index = this.users.findIndex((user) => user.id === id);
-    if (index === -1) {
-      throw new NotFoundException('User not found');
-    }
-    this.users.splice(index, 1);
+    this.dbService.delete(this.collection, id);
   }
 
   update(id: string, updatePasswordDto: UpdatePasswordDto) {
     const { oldPassword, newPassword } = updatePasswordDto;
 
-    const index = this.users.findIndex((user) => user.id === id);
-
-    if (index === -1) {
-      throw new NotFoundException('User not found');
-    }
-
-    const user = this.users[index];
+    const user = this.findOne(id);
 
     if (oldPassword !== user.password) {
       throw new ForbiddenException('Old password is  incorrect');
@@ -95,8 +57,14 @@ export class UserService {
       updatedAt: updatedTime,
     });
 
-    this.users[index] = updatedUser;
+    const updatedData = this.dbService.update<User>(
+      this.collection,
+      id,
+      updatedUser,
+    );
 
-    return updatedUser;
+    return new User({
+      ...updatedData,
+    });
   }
 }

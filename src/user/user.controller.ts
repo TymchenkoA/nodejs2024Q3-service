@@ -9,14 +9,19 @@ import {
   HttpCode,
   UseInterceptors,
   ClassSerializerInterceptor,
+  UsePipes,
+  ValidationPipe,
+  ParseUUIDPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UserService } from './user.service';
-import { User } from './interfaces/user.interface';
+import { User } from './entities/user.entity';
 
 @Controller('user')
 @UseInterceptors(ClassSerializerInterceptor)
+@UsePipes(new ValidationPipe({ whitelist: true }))
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -26,15 +31,17 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  // @Get(':id')
-  // findOne(@Param() param): string {
-  //   return `User ${param.id}`;
-  // }
-
   @Get(':id')
   @HttpCode(200)
-  findOne(@Param('id') id): User {
-    return this.userService.findOne(id);
+  findOne(
+    @Param('id', new ParseUUIDPipe({ errorHttpStatusCode: 400 })) id,
+  ): User {
+    const user = this.userService.findOne(id);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
   }
 
   @Post()
@@ -45,13 +52,16 @@ export class UserController {
 
   @Delete(':id')
   @HttpCode(204)
-  delete(@Param('id') id) {
-    return this.userService.delete(id);
+  delete(@Param('id', new ParseUUIDPipe({ errorHttpStatusCode: 400 })) id) {
+    this.userService.delete(id);
   }
 
   @Put(':id')
   @HttpCode(200)
-  update(@Body() updatePasswordDto: UpdatePasswordDto, @Param('id') id) {
+  update(
+    @Body() updatePasswordDto: UpdatePasswordDto,
+    @Param('id', new ParseUUIDPipe({ errorHttpStatusCode: 400 })) id,
+  ) {
     return this.userService.update(id, updatePasswordDto);
   }
 }

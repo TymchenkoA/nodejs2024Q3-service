@@ -1,11 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import {
   Injectable,
-  BadRequestException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { User } from './interfaces/user.interface';
+import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 
@@ -49,14 +48,14 @@ export class UserService {
   create(createUserDto: CreateUserDto) {
     const time = new Date().getTime();
 
-    const newUser: User = {
+    const newUser = new User({
       id: randomUUID(),
       login: createUserDto.login,
       password: createUserDto.password,
       version: 1,
       createdAt: time,
       updatedAt: time,
-    };
+    });
 
     this.users.push(newUser);
 
@@ -80,16 +79,24 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    if (oldPassword !== this.users[index].password) {
+    const user = this.users[index];
+
+    if (oldPassword !== user.password) {
       throw new ForbiddenException('Old password is  incorrect');
     }
 
-    const updatedVersion = this.users[index].version + 1;
+    const updatedVersion = user.version + 1;
+    const updatedTime = new Date().getTime();
 
-    this.users[index] = {
-      ...this.users[index],
+    const updatedUser = new User({
+      ...user,
       password: newPassword,
       version: updatedVersion,
-    };
+      updatedAt: updatedTime,
+    });
+
+    this.users[index] = updatedUser;
+
+    return updatedUser;
   }
 }

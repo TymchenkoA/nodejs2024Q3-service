@@ -54,4 +54,15 @@ export class AlbumService {
 
     return updatedData;
   }
+
+  async handleArtistDeletion(artistId: string): Promise<void> {
+    const albums = await this.findAll();
+    albums.map(async (album) => {
+      if (album.artistId === artistId) {
+        await this.dbService.update<Album>(this.collection, album.id, {
+          artistId: null,
+        });
+      }
+    });
+  }
 }

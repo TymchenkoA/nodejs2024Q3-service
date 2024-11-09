@@ -15,11 +15,15 @@ import {
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
 import { AlbumService } from './album.service';
+import { TrackService } from '../track/track.service';
 import { Album } from './entities/album.entity';
 
 @Controller('album')
 export class AlbumController {
-  constructor(private readonly albumService: AlbumService) {}
+  constructor(
+    private readonly albumService: AlbumService,
+    private readonly trackService: TrackService,
+  ) {}
 
   @Get()
   @HttpCode(200)
@@ -53,6 +57,8 @@ export class AlbumController {
     @Param('id', new ParseUUIDPipe({ errorHttpStatusCode: 400 })) id,
   ): Promise<void> {
     await this.albumService.delete(id);
+    await this.trackService.handleAlbumDeletion(id);
+    // await this.favoriteService.removeAlbumFromFavorites(id); // TODO Remove from favorites
   }
 
   @Put(':id')

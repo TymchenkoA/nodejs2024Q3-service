@@ -15,11 +15,17 @@ import {
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { ArtistService } from './artist.service';
+import { TrackService } from '../track/track.service';
+import { AlbumService } from '../album/album.service';
 import { Artist } from './entities/artist.entity';
 
 @Controller('artist')
 export class ArtistController {
-  constructor(private readonly artistService: ArtistService) {}
+  constructor(
+    private readonly artistService: ArtistService,
+    private readonly trackService: TrackService,
+    private readonly albumService: AlbumService,
+  ) {}
 
   @Get()
   @HttpCode(200)
@@ -53,6 +59,8 @@ export class ArtistController {
     @Param('id', new ParseUUIDPipe({ errorHttpStatusCode: 400 })) id,
   ): Promise<void> {
     await this.artistService.delete(id);
+    await this.trackService.handleArtistDeletion(id);
+    await this.albumService.handleArtistDeletion(id);
   }
 
   @Put(':id')

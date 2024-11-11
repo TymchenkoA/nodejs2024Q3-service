@@ -9,5 +9,6 @@ import { DatabaseModule } from '../database/database.module';
   imports: [DatabaseModule],
   controllers: [ArtistController],
   providers: [ArtistService, TrackService, AlbumService],
+  exports: [ArtistService],
 })
 export class ArtistModule {}

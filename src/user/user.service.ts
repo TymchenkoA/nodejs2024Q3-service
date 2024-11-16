@@ -1,26 +1,39 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { InMemoryDbService } from '../database/in-memory-db.service';
+import { UserResponseDto } from './dto/user-response.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+
+//TODO fix User according to tests, though in Postman it works fine
 
 @Injectable()
 export class UserService {
-  private readonly collection = 'users';
+  constructor(private prisma: PrismaService) {}
 
-  constructor(private readonly dbService: InMemoryDbService) {}
-
-  findAll(): User[] {
-    return this.dbService.findAll<User>(this.collection);
+  async findAll(): Promise<User[]> {
+    return await this.prisma.user.findMany();
   }
 
-  findOne(id: string): User {
-    return this.dbService.findOne<User>(this.collection, id);
+  async findOne(id: string): Promise<User> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (user === null) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return user;
   }
 
-  create(createUserDto: CreateUserDto) {
-    const time = new Date().getTime();
+  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
+    const time = new Date();
 
     const newUser = new User({
       id: randomUUID(),
@@ -31,40 +44,69 @@ export class UserService {
       updatedAt: time,
     });
 
-    return this.dbService.create<User>(this.collection, newUser);
+    const createdUser = await this.prisma.user.create({
+      data: {
+        id: newUser.id,
+        login: newUser.login,
+        password: newUser.password,
+        version: newUser.version,
+        createdAt: newUser.createdAt,
+        updatedAt: newUser.updatedAt,
+      },
+    });
+
+    const { password, ...userWithoutPassword } = createdUser;
+    // return {
+    //   ...userWithoutPassword,
+    //   createdAt: userWithoutPassword.createdAt.getTime(),
+    //   updatedAt: userWithoutPassword.updatedAt.getTime(),
+    // };
+
+    userWithoutPassword.createdAt = new Date(userWithoutPassword.createdAt);
+    userWithoutPassword.updatedAt = new Date(userWithoutPassword.updatedAt);
+
+    return userWithoutPassword;
   }
 
-  delete(id: string) {
-    this.dbService.delete(this.collection, id);
-  }
+  // async delete(id: string) {
+  //   const user = await this.prisma.user.findUnique({
+  //     where: { id },
+  //   });
 
-  update(id: string, updatePasswordDto: UpdatePasswordDto) {
+  //   if (user === null) {
+  //     throw new NotFoundException(`User with ID ${id} not found`);
+  //   }
+
+  //   await this.prisma.user.delete({
+  //     where: { id },
+  //   });
+  // }
+
+  async update(id: string, updatePasswordDto: UpdatePasswordDto) {
     const { oldPassword, newPassword } = updatePasswordDto;
 
-    const user = this.findOne(id);
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
 
     if (oldPassword !== user.password) {
-      throw new ForbiddenException('Old password is  incorrect');
+      throw new ForbiddenException('Old password is incorrect');
     }
 
     const updatedVersion = user.version + 1;
-    const updatedTime = new Date().getTime();
+    const updatedTime = new Date();
 
-    const updatedUser = new User({
-      ...user,
-      password: newPassword,
-      version: updatedVersion,
-      updatedAt: updatedTime,
-    });
-
-    const updatedData = this.dbService.update<User>(
-      this.collection,
-      id,
-      updatedUser,
-    );
-
-    return new User({
-      ...updatedData,
+    return await this.prisma.user.update({
+      where: { id },
+      data: {
+        password: newPassword,
+        version: updatedVersion,
+        updatedAt: updatedTime,
+      },
     });
   }
 }

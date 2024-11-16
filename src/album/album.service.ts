@@ -1,22 +1,28 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
 import { Album } from './entities/album.entity';
-import { InMemoryDbService } from '../database/in-memory-db.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AlbumService {
-  private collection = 'albums';
-
-  constructor(private readonly dbService: InMemoryDbService) {}
+  constructor(private prisma: PrismaService) {}
 
   async findAll(): Promise<Album[]> {
-    return this.dbService.findAll<Album>(this.collection);
+    return await this.prisma.album.findMany();
   }
 
   async findOne(id: string): Promise<Album | undefined> {
-    return this.dbService.findOne<Album>(this.collection, id);
+    const album = await this.prisma.album.findUnique({
+      where: { id },
+    });
+
+    if (!album) {
+      throw new NotFoundException(`Album with ID ${id} not found`);
+    }
+
+    return album;
   }
 
   async create(createAlbumDto: CreateAlbumDto): Promise<Album> {
@@ -27,13 +33,24 @@ export class AlbumService {
       artistId: createAlbumDto.artistId,
     });
 
-    await this.dbService.create<Album>(this.collection, newAlbum);
-
+    await this.prisma.album.create({
+      data: newAlbum,
+    });
     return newAlbum;
   }
 
   async delete(id: string): Promise<void> {
-    this.dbService.delete(this.collection, id);
+    const album = await this.prisma.album.findUnique({
+      where: { id },
+    });
+
+    if (album === null) {
+      throw new NotFoundException(`Album with ID ${id} not found`);
+    }
+
+    await this.prisma.album.delete({
+      where: { id },
+    });
   }
 
   async update(id: string, updateAlbumDto: UpdateAlbumDto): Promise<Album> {
@@ -46,21 +63,23 @@ export class AlbumService {
       artistId: updateAlbumDto.artistId,
     });
 
-    const updatedData = await this.dbService.update<Album>(
-      this.collection,
-      id,
-      updatedAlbum,
-    );
+    const updatedData = await this.prisma.album.update({
+      where: { id },
+      data: updatedAlbum,
+    });
 
     return updatedData;
   }
 
-  async handleArtistDeletion(artistId: string): Promise<void> {
+  async handleArtistDeletion(artId: string): Promise<void> {
     const albums = await this.findAll();
-    albums.map(async (album) => {
-      if (album.artistId === artistId) {
-        await this.dbService.update<Album>(this.collection, album.id, {
-          artistId: null,
+    albums.map(async ({ artistId, id }) => {
+      if (artistId === artId) {
+        await this.prisma.album.update({
+          where: { id },
+          data: {
+            artistId: null,
+          },
         });
       }
     });

@@ -1,4 +1,5 @@
 # Home Library Service
+This project is a Node.js application using NestJS and Prisma ORM, running in Docker containers with PostgreSQL as the database.
 
 ## Prerequisites
 
@@ -8,65 +9,102 @@
 ## Downloading
 
 ```
-git clone {repository URL}
+git clone https://github.com/TymchenkoA/nodejs2024Q3-service.git
+
+cd nodejs2024Q3-service
+
+git checkout containerization-database-orm
 ```
 
-## Installing NPM modules
+## Steps to get started
 
+1.Install dependencies: 
 ```
 npm install
 ```
+2.Create .env file (based on .env.example): ./.env
 
-## Running application
+3.Build and start the Docker containers: 
+```
+npm run docker
+```
+4.Open new terminal and run prisma migrations: 
 
 ```
-npm start
+docker exec -it node-container npx prisma migrate dev --name init
 ```
+Now node app and database are running in containers and ready to use prisma migrations
 
-After starting the app on port (4000 as default) you can open
-in your browser OpenAPI documentation by typing http://localhost:4000/doc/.
-For more information about OpenAPI/Swagger please visit https://swagger.io/.
-
-## Testing
-
+## Running tests with Docker
 After application running open new terminal and enter:
-
-To run all tests without authorization
-
 ```
-npm run test
+npm run docker:test
 ```
 
-To run only one of all test suites
-
+## Scan images for security vulnerabilities
 ```
-npm run test -- <path to suite>
-```
-
-To run all test with authorization
-
-```
-npm run test:auth
+npm run scan:node
+npm run scan:postgres
 ```
 
-To run only specific test suite with authorization
+## General project description
+This project is a Home Library Service! Users can create, read, update, delete data about Artists, Tracks and Albums, add them to Favorites in their own Home Library!
 
-```
-npm run test:auth -- <path to suite>
-```
+### API Endpoints
 
-### Auto-fix and format
+Users  (/user route)
+1. GET /user is used to get all users
+2. GET /user/:id is used to retrieve a user by ID.
+3. POST /user is used to create record about new user and store it in database
+    Following DTO should be used:
+    interface CreateUserDto {
+        login: string;
+        password: string;
+    }
+4. PUT /user/:id is used to update user's password
+    Following DTO should be used:
+    interface UpdatePasswordDto {
+        oldPassword: string; // previous password
+        newPassword: string; // new password
+    }
+5. DELETE /user/{userId} is used to delete existing user from database
 
-```
-npm run lint
-```
+Tracks (/track route)
+1. GET /track is used to get all tracks
+2. GET /track/:id is used to retrieve a track by ID.
+3. POST /track is used to create record about new track and store it in database
+4. PUT /track/:id is used to update track info
+5. DELETE /track/:id is used to delete existing track from database
 
-```
-npm run format
-```
+Artists (/artist route)
+1. GET /artist is used to get all artists
+2. GET /artist/:id is used to retrieve an artist by ID.
+3. POST /artist is used to create record about new artist and store it in database
+4. PUT /artist/:id is used to update artist info
+5. DELETE /artist/:id is used to delete existing artist from database
 
-### Debugging in VSCode
+Albums (/album route)
+1. GET /album is used to get all albums
+2. GET /album/:id is used to retrieve an album by ID.
+3. POST /album is used to create record about new album and store it in database
+4. PUT /album/:id is used to update album info
+5. DELETE /album/:id is used to delete existing album from database
 
-Press <kbd>F5</kbd> to debug.
+Favorites
+1. GET /favs is used to get all favourites
+2. POST /favs/track/:id is used to add track to the favourites
+3. DELETE /favs/track/:id is used to delete track from favourites
+4. POST /favs/album/:id is used to add album to the favourites
+5. DELETE /favs/album/:id is used to delete album from favourites
+6. POST /favs/artist/:id is used to add artist to the favourites
+7. DELETE /favs/artist/:id is used to delete artist from favourites
 
-For more information, visit: https://code.visualstudio.com/docs/editor/debugging
+### Error handling
+The API returns appropriate status codes and error messages:
+
+200 OK: Request was successful.
+201 Created: A new resource was created successfully.
+204 No Content: Resource was deleted successfully.
+400 Bad Request: Validation failed.
+404 Not Found: Resource not found.
+500 Internal Server Error: An unexpected error occurred.

@@ -1,4 +1,5 @@
 # Home Library Service
+This project is a Node.js application using NestJS and Prisma ORM, running in Docker containers with PostgreSQL as the database.
 
 ## Prerequisites
 
@@ -9,50 +10,41 @@
 
 ```
 git clone https://github.com/TymchenkoA/nodejs2024Q3-service.git
+
+cd nodejs2024Q3-service
+
+git checkout containerization-database-orm
 ```
 
-## Installing NPM modules
+## Steps to get started
 
+1.Install dependencies: 
 ```
 npm install
 ```
+2.Create .env file (based on .env.example): ./.env
 
-## PORT setup
-PORT value is stored in .env.example file
-Rename .env.example file to .env file
-
-## Running application
+3.Build and start the Docker containers: 
+```
+npm run docker
+```
+4.Open new terminal and run prisma migrations: 
 
 ```
-npm start
+docker exec -it node-container npx prisma migrate dev --name init
 ```
+Now node app and database are running in containers and ready to use prisma migrations
 
-## Testing
-
+## Running tests with Docker
 After application running open new terminal and enter:
-
-To run all tests without authorization
-
 ```
-npm run test
+npm run docker:test
 ```
 
-To run only one of all test suites
-
+## Scan images for security vulnerabilities
 ```
-npm run test -- <path to suite>
-```
-
-To run all test with authorization
-
-```
-npm run test:auth
-```
-
-To run only specific test suite with authorization
-
-```
-npm run test:auth -- <path to suite>
+npm run scan:node
+npm run scan:postgres
 ```
 
 ## General project description

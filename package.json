@@ -8,7 +8,8 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "docker": "docker-compose up",
+    "docker": "docker-compose up --build",
+    "docker:test": "docker exec -it node-container npm run test",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "scan:node": "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image docker-node",
     "scan:postgres": "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image docker-postgres",

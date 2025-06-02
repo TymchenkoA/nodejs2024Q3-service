@@ -21,37 +21,37 @@ export class FavouritesController {
 
   @Post('track/:id')
   @HttpCode(201)
-  addTrackToFavorites(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.favouritesService.addToFavourites('tracks', id);
+  addTrackToFavourites(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.favouritesService.addTrackToFavourites(id);
   }
 
   @Delete('track/:id')
   @HttpCode(204)
-  removeTrackFromFavorites(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.favouritesService.removeFromFavourites('tracks', id);
+  removeTrackFromFavourites(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.favouritesService.removeTrackToFavourites(id);
   }
 
   @Post('album/:id')
   @HttpCode(201)
-  addAlbumToFavorites(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.favouritesService.addToFavourites('albums', id);
+  addAlbumToFavourites(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.favouritesService.addAlbumToFavourites(id);
   }
 
   @Delete('album/:id')
   @HttpCode(204)
-  removeAlbumFromFavorites(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.favouritesService.removeFromFavourites('albums', id);
+  removeAlbumFromFavourites(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.favouritesService.removeAlbumToFavourites(id);
   }
 
   @Post('artist/:id')
   @HttpCode(201)
-  addArtistToFavorites(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.favouritesService.addToFavourites('artists', id);
+  addArtistToFavourites(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.favouritesService.addArtistToFavourites(id);
   }
 
   @Delete('artist/:id')
   @HttpCode(204)
-  removeArtistFromFavorites(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.favouritesService.removeFromFavourites('artists', id);
+  removeArtistFromFavourites(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.favouritesService.removeArtistToFavourites(id);
   }
 }
